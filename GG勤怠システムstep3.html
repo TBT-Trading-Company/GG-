@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打刻システム</title>
+</head>
+<body>
+    <h1>打刻システム</h1>
+    <button id="takePhotoButton">写真を撮る</button>
+    <canvas id="photoCanvas" style="display:none;"></canvas>
+    <p id="randomNumber"></p>
+    <p id="gpsInfo"></p>
+    <input type="file" accept="image/*" id="photoInput" capture="camera" style="display:none;">
+    <button id="savePhotoButton" style="display:none;">写真を保存</button>
+
+    <script>
+        const randomNumberApiUrl = "YOUR_API_URL"; // ステップ2で作ったAPIのURLをここに貼り付ける
+
+        // ランダム3桁の数字を取得
+        fetch(randomNumberApiUrl)
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('randomNumber').innerText = `今日の数字: ${data}`;
+            });
+
+        // 位置情報を取得
+        navigator.geolocation.getCurrentPosition(position => {
+            const { latitude, longitude } = position.coords;
+            document.getElementById('gpsInfo').innerText = `位置情報: 緯度 ${latitude}, 経度 ${longitude}`;
+        });
+
+        // 写真撮影機能
+        document.getElementById('takePhotoButton').addEventListener('click', () => {
+            document.getElementById('photoInput').click();
+        });
+
+        document.getElementById('photoInput').addEventListener('change', event => {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                const canvas = document.getElementById('photoCanvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                img.src = reader.result;
+
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    ctx.font = '30px Arial';
+                    ctx.fillStyle = 'red';
+                    ctx.fillText(document.getElementById('randomNumber').innerText, 20, 50);
+                    ctx.fillText(document.getElementById('gpsInfo').innerText, 20, 90);
+                    canvas.style.display = 'block';
+                    document.getElementById('savePhotoButton').style.display = 'block';
+                };
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        // 保存ボタン
+        document.getElementById('savePhotoButton').addEventListener('click', () => {
+            const canvas = document.getElementById('photoCanvas');
+            const link = document.createElement('a');
+            link.download = '打刻写真.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    </script>
+</body>
+</html>
